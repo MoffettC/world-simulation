@@ -5,11 +5,14 @@ import * as React from 'react';
 
 function App() {
   return (
-    <div className={styles.app}>
+    <div className={styles.app} >
+      
       <header className={styles.header}>
-        <img src={logo} className={styles.logo} alt="logo" />
+        <div>
+          <img src={logo} className={styles.logo} alt="logo" />
+        </div>
         <p>
-          Edit <code>src/App.js</code> and save to reload.
+          Edit <code>src/App.js</code> and save to reload. &nbsp;
         </p>
         <a
           className={styles.link}
@@ -21,7 +24,7 @@ function App() {
         </a>
       </header>
 
-      {/* <Simulation></Simulation> */}
+      <Simulation></Simulation>
 
     </div>
   );
