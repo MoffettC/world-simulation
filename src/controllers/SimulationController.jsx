@@ -53,7 +53,7 @@ const colorDistance = (aRed,aGreen,aBlue,bRed,bGreen,bBlue) => {
 
 const randomLand = () => {
         let val = getRandomIntInclusive(1, 99);
-        if (val < 50) {
+        if (val < 30) {
             return hexToRgb('#F0FFFF'); //light blue
         } else {
             return hexToRgb('3caa13'); //dark green
@@ -79,7 +79,7 @@ const initializeBoard = (boardToInitialize) => {
                     left: {},
                     right: {},
                 }, //will go back and fill in after initialization,
-                strength: getRandomIntInclusive(30, 99),
+                strength: getRandomIntInclusive(20, 99),
             }
             board[i][j] = province(initialSetup);
         }
@@ -104,10 +104,11 @@ const initializeBoard = (boardToInitialize) => {
     return board;
 }
 
-const cycleMapXTimes = (times, board, setBoard, setStatus, setboardCycles, boardCycles) => {
+const cycleMapXTimes = (times, board, setBoard, setStatus, setboardCycles, boardCycles, setWorking) => {
     setBoard([...cycleMapOnce(board)]); //immediate
-    setStatus("Processing cycle: " + 1);
-    setboardCycles(boardCycles++);
+    setStatus("Processing cycle: " + (1) + " Total Cycles: " + boardCycles);
+    setboardCycles(++boardCycles);
+    setWorking(true);
 
     for (let i = 1; i < times; i++) {
         setTimeout(() => {
@@ -115,10 +116,11 @@ const cycleMapXTimes = (times, board, setBoard, setStatus, setboardCycles, board
             setBoard([...cycleMapOnce(board)])
             if (i == (times-1)){
                 setStatus("Completed cycle(s): " + (i+1) + " Total Cycles: " + boardCycles);
+                setWorking(false);
             } else {
-                setStatus("Processing cycle: " + (i+1));
+                setStatus("Processing cycle: " + (i+1) + " Total Cycles: " + boardCycles);
             }
-        }, i * 750); //timeout to see progression
+        }, i * 1000); //timeout to see progression
     }
 }
 
@@ -136,17 +138,25 @@ const cycleMapOnce = (board) => {
 
                     if (neighborSpot.id && neighborSpot.color != boardSpot.color) { //on map neighbors
                         let roll = getRandomIntInclusive(0, 100);
-                         if (roll <= boardSpot.strength) {
+                         if (roll <= boardSpot.strength || roll == 100) {
                             neighborSpot.color = boardSpot.color;
                             neighborSpot.name = boardSpot.name;
+
+                            if (neighborSpot.strength - 10 > 30) {
+                                neighborSpot.strength = neighborSpot.strength - 10;
+                            }
                             // visitedHashMap[neighborSpot.id] = 1;
                         } else {
+
+                            if (boardSpot.strength + 10 < 99) {
+                                boardSpot.strength = boardSpot.strength + 10;
+                            }
                             // boardSpot.color = neighborSpot.color
                             // boardSpot.name = neighborSpot.name
                         }
 
                     } else if (!neighborSpot.id) {                                  //off map neighbor
-                        let roll = getRandomIntInclusive(0, 51);
+                        let roll = getRandomIntInclusive(0, 81);
                         let x = randomLand();
                         if (roll > boardSpot.strength) {
                             boardSpot.color = x;

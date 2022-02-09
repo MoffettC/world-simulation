@@ -6,26 +6,23 @@ import {UpdatedMap} from './simulation/SimulationViewer.jsx';
 import {createBoard} from '../models/SimulationModel.jsx';
 import {initializeBoard, cycleMapOnce, cycleMapXTimes} from '../controllers/SimulationController.jsx';
 
-
-function createAndInitializeBoard(x, y, setBoard) {
-  console.log('Processing...');
-  let board = createBoard(x, y);
-  board = initializeBoard(board);
-  setBoard(board);
-  console.log('Finished');
-}
-
-
-
-function App() {
+const App = function App() {
   const [board, setBoard] = useState();
   const [isBoardCreated, setBoardCreated] = useState(false);
   const [boardCycles, setboardCycles] = useState(0);
   const [status, setStatus] = useState('');
+  const [isWorking, setWorking] = useState(false);
 
   const defaultXSize = 50;
   const defaultYSize = 50;
   const defaultCycleAmt = 25;
+
+  const createAndInitializeBoard = (x, y, setBoard) => {
+    let board = createBoard(x, y);
+    board = initializeBoard(board);
+    board = cycleMapOnce(board);
+    setBoard(board);
+  }
 
   const onStart = (e) => {
     createAndInitializeBoard(defaultXSize, defaultYSize, setBoard);
@@ -33,7 +30,7 @@ function App() {
 
   const onCycle = (e) => {
     setStatus("Processing...");
-    cycleMapXTimes(defaultCycleAmt, board, setBoard, setStatus, setboardCycles, boardCycles)
+    cycleMapXTimes(defaultCycleAmt, board, setBoard, setStatus, setboardCycles, boardCycles, setWorking)
   }
 
   {/* create simModel, board store it as state obj here? 
@@ -61,8 +58,13 @@ function App() {
       </header>
       <Button style={{margin: '5px', fontSize: 'x-small'}} 
               onClick={(e) => onStart()}> Press to recreate map </Button>
-      <Button style={{margin: '5px', fontSize: 'x-small'}} 
-              onClick={(e) => onCycle()}> Press to cycle map </Button>
+      {isWorking ? 
+        <Button disabled style={{margin: '5px', fontSize: 'x-small',}} 
+        onClick={(e) => onCycle()}> Press to cycle map </Button>
+        :
+        <Button style={{margin: '5px', fontSize: 'x-small',}} 
+                onClick={(e) => onCycle()}> Press to cycle map </Button>
+      }
       {/*
           maybe inputs for x number cycles?
           log output somewhere
