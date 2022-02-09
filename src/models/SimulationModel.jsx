@@ -1,4 +1,5 @@
-import * as React from 'react';
+import React, { useState } from 'react';
+import {getRandomIntInclusive, getRandomColor, hexToRgb} from '../controllers/SimulationController.jsx';
 
 //holds the data pattern for sim objects passed between viewer/controller
 
@@ -11,8 +12,41 @@ import * as React from 'react';
             //Luxury goods
         //Trade routes/partners?
 
-export default function Model() {
-    
-    return <h1 class="row flex-grow-1">Model</h1>
-
+const coord = (xPox, yPos) => {
+    return {
+        x: xPox,
+        y: yPos
+    }
 }
+
+const province = (args) => {
+    return {
+        id: args.id,
+        name: args.name,
+        color: args.color,
+        position: args.position,
+        neighbors: args.neighbors,
+        strength: args.strength,
+    }
+}
+
+// let board;
+// const setBoard = (newboard) => {
+//     board = newboard;
+// }
+
+const createBoard = (xSize, ySize) => {
+    var board = new Array(xSize);
+    for (var i = 0; i < board.length; i++) { //i = row/y
+        board[i] = new Array(ySize);
+    }
+    return board;
+}
+
+export {
+    createBoard,
+    // board,
+    // setBoard,
+    province,
+    coord
+} 
