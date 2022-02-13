@@ -30,11 +30,6 @@ const province = (args) => {
     }
 }
 
-// let board;
-// const setBoard = (newboard) => {
-//     board = newboard;
-// }
-
 const createBoard = (xSize, ySize) => {
     var board = new Array(xSize);
     for (var i = 0; i < board.length; i++) { //i = row/y
@@ -45,8 +40,6 @@ const createBoard = (xSize, ySize) => {
 
 export {
     createBoard,
-    // board,
-    // setBoard,
     province,
     coord
 } 
