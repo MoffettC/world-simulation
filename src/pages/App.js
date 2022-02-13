@@ -5,6 +5,7 @@ import styles from './App.module.css';
 import {UpdatedMap} from './simulation/SimulationViewer.jsx';
 import {createBoard} from '../models/SimulationModel.jsx';
 import {initializeBoard, cycleMapOnce, cycleMapXTimes} from '../controllers/SimulationController.jsx';
+import {Constants} from '../utils/Constants.jsx';
 
 const App = function App() {
   const [board, setBoard] = useState();
