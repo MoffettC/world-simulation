@@ -1,0 +1,13 @@
+
+
+/* width/height here control if the pixels are stretched/compressed on browser (actual viewing size) */
+/* if this is more than the html size, then image is stretched (or if vice versa, image looks compressed) */
+canvas {
+    width: 1024px; 
+    height: 1024px;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: -webkit-crisp-edges;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+  }
+  

@@ -120,7 +120,7 @@ const cycleMapXTimes = (times, board, setBoard, setStatus, setboardCycles, board
             } else {
                 setStatus("Processing cycle: " + (i+1) + " Total Cycles: " + boardCycles);
             }
-        }, i * 1000); //timeout to see progression
+        }, i * 250); //timeout to see progression
     }
 }
 

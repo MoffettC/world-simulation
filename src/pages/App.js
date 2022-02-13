@@ -13,8 +13,8 @@ const App = function App() {
   const [status, setStatus] = useState('');
   const [isWorking, setWorking] = useState(false);
 
-  const defaultXSize = 50;
-  const defaultYSize = 50;
+  const defaultXSize = 400;
+  const defaultYSize = 400;
   const defaultCycleAmt = 25;
 
   const createAndInitializeBoard = (x, y, setBoard) => {
