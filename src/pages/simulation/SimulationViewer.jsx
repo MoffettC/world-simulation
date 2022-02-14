@@ -1,7 +1,5 @@
 import React,  { useState, useEffect, useRef, ReactDOM } from 'react';
-import { Button, Col, Row, Form, OverlayTrigger, Tooltip, Overlay, Container, } from 'react-bootstrap';
-// import { Button, Col, Form, OverlayTrigger, Tooltip, Overlay } from 'bootstrap';
-import {hexToRgb, getRandomColor} from '../../controllers/SimulationController.jsx';
+import { Button, Col, Row, Form, OverlayTrigger, Tooltip, Overlay, Container, Popover} from 'react-bootstrap';
 import SimModel from '../../models/SimulationModel.jsx';
 import {Constants} from '../../utils/Constants.jsx';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -10,13 +8,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCoffee } from '@fortawesome/free-solid-svg-icons'
 import { library } from '@fortawesome/fontawesome-svg-core'
 import cssStyles from './SimulationViewer.module.css';
+import { computeStyles } from '@popperjs/core';
 
-/*  these should match the nodes produced in controller, ie how many pixels per node 
-if nodes = 100 and canvasWidth = 200, it means 1/2 ratio of image shown because there
-arent enough nodes to fill canvas size
----size of the actual html component--- */
-export const canvasWidth = 200; 
-export const canvasHeight = 200;
 export let canvasOffsetWidth; 
 export let canvasOffsetHeight;
 
@@ -26,6 +19,9 @@ const UpdatedMap = (props) => {
     const [context, setContext] = useState(null);
     const [currNode, setCurrNode] = useState(null);
     const [referenceElement, setReferenceElement] = useState(null);
+
+    const [mouseX, setMouseX] = useState(null);
+    const [mouseY, setMouseY] = useState(null);
 
     // useEffect uses the callbacks when state changes
     useEffect(()=>{
@@ -58,21 +54,21 @@ const UpdatedMap = (props) => {
     const displayNodeInfo = (event) => {
         let rect = canvas.getBoundingClientRect();
         //converts to css pixels
-        let x = Math.round(event.clientX - rect.left);
-        let y = Math.round(event.clientY - rect.top);
-        // console.log("Coordinate x: " + x, "Coordinate y: " + y);
+        let x = Math.round(event.clientX - rect.left)-2;
+        let y = Math.round(event.clientY - rect.top)-2;
 
-        let xOffsetRatio = canvasWidth / canvasOffsetWidth;
-        let yOffsetRatio = canvasHeight / canvasOffsetHeight;
+        setMouseX(x);
+        setMouseY(y - 400); //arbitrary, need to adjust
+
+        let xOffsetRatio = Constants.CANVAS_WIDTH / canvasOffsetWidth;
+        let yOffsetRatio = Constants.CANVAS_HEIGHT / canvasOffsetHeight;
 
         const board = props.simboard;
-        let findX = Math.round((x * xOffsetRatio) * (400 / canvasWidth));
-        let findY = Math.round((y * yOffsetRatio) * (400 / canvasHeight));
+        let findX = Math.round((x * xOffsetRatio) * (Constants.DEFAULT_XNODE_SIZE / Constants.CANVAS_WIDTH));
+        let findY = Math.round((y * yOffsetRatio) * (Constants.DEFAULT_YNODE_SIZE / Constants.CANVAS_HEIGHT));
 
         if (findX < board.length && findY < board[0].length){
-            setCurrNode(board[findX][findY]);
-        } else {
-            console.log("OUT: " + findX + " " + findY)
+            setCurrNode(board[findY][findX]);
         }
     }
 
@@ -81,19 +77,41 @@ const UpdatedMap = (props) => {
     }
 
     const draw = (img, col) => {
-        let opacityVal = col.strength / 100;
+        let opacityVal = (col.culture.strength / Constants.MAX_STRENGTH_ALLOWED) + Constants.MINIMUM_OPACITY_VISIBILITY;
+        if (opacityVal > 0.85) {
+            opacityVal = 0.85;
+        }
+
         let pixels = img.data;
-        var x = Math.round((col.position.x/canvasWidth) * canvasWidth);
-        var y = Math.round((col.position.y/canvasHeight) * canvasHeight);
-        var off = (y * img.width + x) * 4;
-        pixels[off] = col.color.r;
-        pixels[off + 1] = col.color.g;
-        pixels[off + 2] = col.color.b;
-        pixels[off + 3] = (opacityVal * 255);
+        var x = Math.round((col.position.x / Constants.CANVAS_WIDTH) * Constants.CANVAS_WIDTH);
+        var y = Math.round((col.position.y / Constants.CANVAS_HEIGHT) * Constants.CANVAS_HEIGHT);
+        var off = (y * Constants.CANVAS_WIDTH + x) * 4;
+        
+        if (currNode && currNode.position.x == col.position.x && currNode.position.y == col.position.y) {          //selected
+            pixels[off]     = 255;
+            pixels[off + 1] = 255;
+            pixels[off + 2] = 255;
+            pixels[off + 3] = 255;
+        } else if (currNode && currNode.name == col.name && col.culture.initalRate < 0) {   //decaying
+            pixels[off]     = 0;
+            pixels[off + 1] = 0;
+            pixels[off + 2] = 0;
+            pixels[off + 3] = 255;
+        } else if (currNode && currNode.name == col.name) {                                 //growing
+            pixels[off]     = 220;
+            pixels[off + 1] = 220;
+            pixels[off + 2] = 220;
+            pixels[off + 3] = 255;
+        } else {
+            pixels[off]     = col.culture.color.r;
+            pixels[off + 1] = col.culture.color.g;
+            pixels[off + 2] = col.culture.color.b;
+            pixels[off + 3] = opacityVal * 255;
+        }
     }
 
     if (context) {
-        let img = context.getImageData(0, 0, canvasWidth, canvasHeight);
+        let img = context.getImageData(0, 0, Constants.CANVAS_WIDTH, Constants.CANVAS_HEIGHT);
         props.simboard.map(function (row, rowId) {
             row.map((col, colId) => { 
                     draw(img, col);
@@ -104,24 +122,41 @@ const UpdatedMap = (props) => {
 
     return (
         <div style={{marginTop: '20px', display: 'grid', fontSize: 'small', justifyContent: 'center',}}> 
-            <Overlay target={referenceElement} show={isHover} placement="right" >
-                {(props) => (
-                    <Tooltip id="overlay-example" {...props}>
-                        {"Information: "}<br></br>
-                        {"Id: " + currNode.id}<br></br>
-                        {"Name: " + currNode.name}<br></br> 
-                        {"Pos: " + currNode.position.x + " " + currNode.position.y}<br></br>
-                        {"Str: " + currNode.strength}<br></br>
-                    </Tooltip>
-                )}
+            <Overlay target={referenceElement} show={isHover} >
+                {(props) => {
+                    if (props.style.transform) {
+                        let currStyle = {
+                            ...props.style
+                        }
+                        let adjustedPosStyle = {
+                            transform: "translate3d(" + mouseX + "px, " + mouseY + "px, 0)",
+                        }
+                        props.style  = {...currStyle, ...adjustedPosStyle}
+                    }
+
+                    return (
+                        <Popover id="overlay" 
+                                {...props}>
+
+                                {"Information: "}<br></br>
+                                {"Id: " + currNode.id}<br></br>
+                                {"Name: " + currNode.name}<br></br> 
+                                {"Culture Color: " + currNode.culture.color.r + " " + currNode.culture.color.g + " " + currNode.culture.color.b + " "}<br></br> 
+                                {"Pos: " + currNode.position.x + " " + currNode.position.y}<br></br>
+                                {"Culture Power: " + currNode.culture.strength}<br></br>
+                                {"Culture Rate: " + currNode.culture.initalRate}<br></br>
+
+                        </Popover>
+                    )
+                }}
             </Overlay>
 
             <canvas 
             id='canvas'
             ref={setReferenceElement}
             className={cssStyles.canvas}
-            width={canvasWidth}
-            height={canvasHeight}/>
+            width={Constants.CANVAS_WIDTH}
+            height={Constants.CANVAS_HEIGHT}/>
         </div>
     )
 }
