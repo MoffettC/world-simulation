@@ -14,10 +14,6 @@ const App = function App() {
   const [status, setStatus] = useState('');
   const [isWorking, setWorking] = useState(false);
 
-  const defaultXSize = 400;
-  const defaultYSize = 400;
-  const defaultCycleAmt = 25;
-
   const createAndInitializeBoard = (x, y, setBoard) => {
     let board = createBoard(x, y);
     board = initializeBoard(board);
@@ -25,56 +21,70 @@ const App = function App() {
     setBoard(board);
   }
 
-  const onStart = (e) => {
-    createAndInitializeBoard(defaultXSize, defaultYSize, setBoard);
+  const onRestart = (e) => {
+    createAndInitializeBoard(Constants.DEFAULT_XNODE_SIZE, Constants.DEFAULT_YNODE_SIZE, setBoard);
   }
 
   const onCycle = (e) => {
     setStatus("Processing...");
-    cycleMapXTimes(defaultCycleAmt, board, setBoard, setStatus, setboardCycles, boardCycles, setWorking)
+    cycleMapXTimes(Constants.DEFAULT_CYCLE_AMT, board, setBoard, setStatus, setboardCycles, boardCycles, setWorking)
   }
 
   {/* create simModel, board store it as state obj here? 
       then pass between viewer/controller?
   */}
   if (!isBoardCreated) {
-    createAndInitializeBoard(defaultXSize, defaultYSize, setBoard);
+    createAndInitializeBoard(Constants.DEFAULT_XNODE_SIZE, Constants.DEFAULT_YNODE_SIZE, setBoard);
     setBoardCreated(true);
   }
 
-  {/* launches simController, pass simModel as prop to do calc on */}
-  {/* return processed simModel from simController  */}
 
   return (
-
     <div className={styles.app} >
-      <header className={styles.header}
-              style={{justifyContent: 'center', display: 'grid'}}>
-          <div>
-            <img src={logo} className={styles.logo} alt="logo" />
-          </div>
-          <p>
-            Beginning of something cool?&nbsp;
-          </p>
-      </header>
-      <Button style={{margin: '5px', fontSize: 'x-small'}} 
-              onClick={(e) => onStart()}> Press to recreate map </Button>
-      {isWorking ? 
-        <Button disabled style={{margin: '5px', fontSize: 'x-small',}} 
-        onClick={(e) => onCycle()}> Press to cycle map </Button>
-        :
-        <Button style={{margin: '5px', fontSize: 'x-small',}} 
-                onClick={(e) => onCycle()}> Press to cycle map </Button>
-      }
-      {/*
-          maybe inputs for x number cycles?
-          log output somewhere
-      */}
+      <Container>
+        <Row>
+          <header className={styles.header}
+                  style={{justifyContent: 'center', display: 'grid'}}>
+              <div>
+                <img src={logo} className={styles.logo} alt="logo" />
+              </div>
+              <p>
+                Beginning of something cool?&nbsp;
+              </p>
+          </header>
+        </Row>
+        <Row>
+          <Col>
+            <Button style={{margin: '5px', fontSize: 'x-small'}} 
+                  onClick={(e) => onRestart()}> Press to recreate map </Button>
+            {isWorking ? 
+              <Button disabled style={{margin: '5px', fontSize: 'x-small',}} 
+              onClick={(e) => onCycle()}> Press to cycle map </Button>
+              :
+              <Button style={{margin: '5px', fontSize: 'x-small',}} 
+                      onClick={(e) => onCycle()}> Press to cycle map </Button>
+            }
+          </Col>
+        </Row>
+        <Row className="justify-content-center">
+          <Col xs={4} >
+            <div>
+              Each color represents a tribe. Mouse over a color to see tribe area.&nbsp;
+              White squares mean growth, black squares mean decay.&nbsp;
+              Darker opacity means stronger tribe power&nbsp;
+            </div>
+          </Col>
+        </Row>
+        {/*
+            maybe inputs for x number cycles?
+            log output somewhere
+        */}
+        <Row>
+          <UpdatedMap simboard={board}> </UpdatedMap>
+        </Row>
 
-      {/* pass processed simModel into simViewer */}
-      <UpdatedMap simboard={board}> </UpdatedMap>
-
-      <footer>&nbsp;{status}</footer>
+        <footer>&nbsp;{status}</footer>
+      </Container>
     </div>
   );
 }
