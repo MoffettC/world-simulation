@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button, Col, Row, Form, OverlayTrigger, Tooltip, Overlay,Container, } from 'react-bootstrap';
 import logo from '../img/logo.svg';
 import styles from './App.module.css';
-import {UpdatedMap} from './simulation/SimulationViewer.jsx';
+import {SimView} from './simulation/SimulationViewer.jsx';
 import {createBoard} from '../models/SimulationModel.jsx';
 import {initializeBoard, cycleMapOnce, cycleMapXTimes} from '../controllers/SimulationController.jsx';
 import {Constants} from '../utils/Constants.jsx';
@@ -68,7 +68,7 @@ const App = function App() {
         </Row>
         <Row className="justify-content-center">
           <Col xs={4} >
-            <div>
+            <div style={{fontSize: '0.7em'}}>
               Each color represents a tribe. Mouse over a color to see tribe area.&nbsp;
               White squares mean growth, black squares mean decay.&nbsp;
               Darker opacity means stronger tribe power&nbsp;
@@ -80,7 +80,7 @@ const App = function App() {
             log output somewhere
         */}
         <Row>
-          <UpdatedMap simboard={board}> </UpdatedMap>
+          <SimView simboard={board}> </SimView>
         </Row>
 
         <footer>&nbsp;{status}</footer>

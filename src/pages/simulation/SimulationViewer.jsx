@@ -13,7 +13,7 @@ import { computeStyles } from '@popperjs/core';
 export let canvasOffsetWidth; 
 export let canvasOffsetHeight;
 
-const UpdatedMap = (props) => {
+const SimView = (props) => {
     const [isHover, setHovered] = useState(false);
     const [canvas, setCanvas] = useState(null);
     const [context, setContext] = useState(null);
@@ -36,6 +36,10 @@ const UpdatedMap = (props) => {
         }
     }, [currNode]); 
 
+    useEffect(() => { 
+        updateMap();
+    }, [{...props.simboard}]); 
+
     useEffect(() => {
         if (canvas) {
             setContext(canvas.getContext('2d'));
@@ -43,10 +47,10 @@ const UpdatedMap = (props) => {
             canvasOffsetHeight = canvas.offsetHeight;
     
             canvas.addEventListener('mousemove', function(event) {
-                displayNodeInfo(event, 'red');
+                displayNodeInfo(event);
             });
             canvas.addEventListener('mouseout', function(event) {
-                hideNodeInfo(event);
+                hideNodeInfo(event);    
             });
         }
     }, [canvas]); 
@@ -57,7 +61,7 @@ const UpdatedMap = (props) => {
         let x = Math.round(event.clientX - rect.left)-2;
         let y = Math.round(event.clientY - rect.top)-2;
 
-        setMouseX(x);
+        setMouseX(x + 50);
         setMouseY(y - 400); //arbitrary, need to adjust
 
         let xOffsetRatio = Constants.CANVAS_WIDTH / canvasOffsetWidth;
@@ -76,6 +80,18 @@ const UpdatedMap = (props) => {
         setHovered(false);
     }
 
+    const updateMap = () => {
+        if (context) {
+            let img = context.getImageData(0, 0, Constants.CANVAS_WIDTH, Constants.CANVAS_HEIGHT);
+            props.simboard.map(function (row, rowId) {
+                row.map((col, colId) => { 
+                        draw(img, col);
+                });
+            });
+            context.putImageData(img, 0, 0);
+        }
+    }
+
     const draw = (img, col) => {
         let opacityVal = (col.culture.strength / Constants.MAX_STRENGTH_ALLOWED) + Constants.MINIMUM_OPACITY_VISIBILITY;
         if (opacityVal > 0.85) {
@@ -87,17 +103,17 @@ const UpdatedMap = (props) => {
         var y = Math.round((col.position.y / Constants.CANVAS_HEIGHT) * Constants.CANVAS_HEIGHT);
         var off = (y * Constants.CANVAS_WIDTH + x) * 4;
         
-        if (currNode && currNode.position.x == col.position.x && currNode.position.y == col.position.y) {          //selected
+        if (isHover && currNode.position.x == col.position.x && currNode.position.y == col.position.y) {          //selected
             pixels[off]     = 255;
             pixels[off + 1] = 255;
             pixels[off + 2] = 255;
             pixels[off + 3] = 255;
-        } else if (currNode && currNode.name == col.name && col.culture.initalRate < 0) {   //decaying
+        } else if (isHover && currNode.name == col.name && col.culture.initalRate < 0) {   //decaying
             pixels[off]     = 0;
             pixels[off + 1] = 0;
             pixels[off + 2] = 0;
             pixels[off + 3] = 255;
-        } else if (currNode && currNode.name == col.name) {                                 //growing
+        } else if (isHover && currNode.name == col.name) {                                 //growing
             pixels[off]     = 220;
             pixels[off + 1] = 220;
             pixels[off + 2] = 220;
@@ -110,16 +126,6 @@ const UpdatedMap = (props) => {
         }
     }
 
-    if (context) {
-        let img = context.getImageData(0, 0, Constants.CANVAS_WIDTH, Constants.CANVAS_HEIGHT);
-        props.simboard.map(function (row, rowId) {
-            row.map((col, colId) => { 
-                    draw(img, col);
-            });
-        });
-        context.putImageData(img, 0, 0);
-    }
-
     return (
         <div style={{marginTop: '20px', display: 'grid', fontSize: 'small', justifyContent: 'center',}}> 
             <Overlay target={referenceElement} show={isHover} >
@@ -130,23 +136,24 @@ const UpdatedMap = (props) => {
                         }
                         let adjustedPosStyle = {
                             transform: "translate3d(" + mouseX + "px, " + mouseY + "px, 0)",
+                            padding: '3px',
+                            border: 'thin',
+                            backgroundColor: 'grey'
                         }
                         props.style  = {...currStyle, ...adjustedPosStyle}
                     }
 
                     return (
-                        <Popover id="overlay" 
-                                {...props}>
-
-                                {"Information: "}<br></br>
-                                {"Id: " + currNode.id}<br></br>
-                                {"Name: " + currNode.name}<br></br> 
-                                {"Culture Color: " + currNode.culture.color.r + " " + currNode.culture.color.g + " " + currNode.culture.color.b + " "}<br></br> 
-                                {"Pos: " + currNode.position.x + " " + currNode.position.y}<br></br>
-                                {"Culture Power: " + currNode.culture.strength}<br></br>
-                                {"Culture Rate: " + currNode.culture.initalRate}<br></br>
-
-                        </Popover>
+                    <Popover id="overlay" 
+                        {...props}>
+                            {"Information: "}<br></br>
+                            {"Id: " + currNode.id}<br></br>
+                            {"Name: " + currNode.name}<br></br> 
+                            {"Pos: " + currNode.position.x + " " + currNode.position.y}<br></br>
+                            {"Culture Color: " + currNode.culture.color.r + " " + currNode.culture.color.g + " " + currNode.culture.color.b + " "}<br></br> 
+                            {"Culture Power: " + Math.round(currNode.culture.strength)}<br></br>
+                            {"Culture Rate: " + Math.round(currNode.culture.initalRate)}<br></br>
+                    </Popover>
                     )
                 }}
             </Overlay>
@@ -162,5 +169,5 @@ const UpdatedMap = (props) => {
 }
   
 export {
-    UpdatedMap
+    SimView
 }

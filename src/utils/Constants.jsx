@@ -1,6 +1,6 @@
 const INDEX_PER_PIXEL = 4;
 const DEFAULT_CYCLE_TIME = 0; //ms 1s = 1000;
-const DEFAULT_CYCLE_AMT = 500;
+const DEFAULT_CYCLE_AMT = 100;
 const DEFAULT_YNODE_SIZE = 100;
 const DEFAULT_XNODE_SIZE = 100; 
 
@@ -25,10 +25,29 @@ const MINIMUM_OPACITY_VISIBILITY = 0.30;
 const DEFINITE_SUCCESS = 100;
 const DEFINITE_FAIL = 10;
 
-const MAX_STRENGTH_ALLOWED = 10000;
+const MAX_STRENGTH_ALLOWED = 20000;
 const MIN_STRENGTH_ALLOWED = 5;
-const MAX_STRENGTH_SPAWNED = 200;
+const MAX_STRENGTH_SPAWNED = 10000;
 const MIN_STRENGTH_SPAWNED = 5;
+
+const DECAY_START = 18000;
+const GROWTH_START = 100;
+
+const OFFMAP_STR_REQUIREMENT = 300;
+const LOG_BASE_MIN = 1;
+const LOG_BASE_MAX = 1;
+const LOG_INITIAL_RATE_MIN = 1;
+const LOG_INITIAL_RATE_MAX = 1;
+
+/* 
+    https://stackoverflow.com/questions/13586999/color-difference-similarity-between-two-values-with-js
+    <=1     Not perceptible by human eyes
+    1-2     Perceptible to close observation
+    2-10    Perceptible at glance
+    11-49   Colors are more similar than opposite
+    100     Colors exact opposite
+*/
+const COLOR_DIFF = 10;
 
 /*
 required diff in str between nodes for a success to occur
@@ -41,8 +60,8 @@ the new nodes strength is weakened. when a node is unsuccessful
 against a diff node, it takes dmg in str
 from the other node
 */
-const MIN_STRENGTH_WEAKENED = 10;
-const MIN_STRENGTH_GAINED = 10;
+const MIN_STRENGTH_WEAKENED = 5;
+const MIN_STRENGTH_GAINED = 5;
 
 /*
 max/min chance for offmap nodes to interact with border nodes
@@ -66,5 +85,9 @@ export const Constants = {
     DEFINITE_FAIL,
     MAX_STRENGTH_SPAWNED,
     MIN_STRENGTH_SPAWNED,
-
+    DECAY_START,
+    GROWTH_START,
+    MIN_STRENGTH_GAINED,
+    MIN_STRENGTH_WEAKENED,
+    COLOR_DIFF,
 }
