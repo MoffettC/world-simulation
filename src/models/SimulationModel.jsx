@@ -23,17 +23,20 @@ const province = (args) => {
     return {
         id: args.id,
         name: args.name,
-        color: args.color,
         position: args.position,
         neighbors: args.neighbors,
-        strength: args.strength,
+        culture: args.culture,
+        political: args.political,
+        economic: args.economic,
+        resources: args.resources,
+        climate: args.climate,
     }
 }
 
 const createBoard = (xSize, ySize) => {
-    var board = new Array(xSize);
+    var board = new Array(ySize);
     for (var i = 0; i < board.length; i++) { //i = row/y
-        board[i] = new Array(ySize);
+        board[i] = new Array(xSize);
     }
     return board;
 }
