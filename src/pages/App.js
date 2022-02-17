@@ -56,7 +56,7 @@ const App = function App() {
         <Row>
           <Col>
             <Button style={{margin: '5px', fontSize: 'x-small'}} 
-                  onClick={(e) => onRestart()}> Press to recreate map </Button>
+                  onClick={(e) => onRestart()}> Press to restart map </Button>
             {isWorking ? 
               <Button disabled style={{margin: '5px', fontSize: 'x-small',}} 
               onClick={(e) => onCycle()}> Press to cycle map </Button>
@@ -73,17 +73,24 @@ const App = function App() {
               White squares mean growth, black squares mean decay.&nbsp;
               Darker opacity means stronger tribe power&nbsp;
             </div>
+            
+            <div style={{fontSize: '0.7em'}}>
+              &nbsp;{status}&nbsp;
+            </div>
+            
           </Col>
         </Row>
         {/*
             maybe inputs for x number cycles?
             log output somewhere
         */}
-        <Row>
+        <Row className="justify-content-center">
           <SimView simboard={board}> </SimView>
         </Row>
 
-        <footer>&nbsp;{status}</footer>
+        <Row>
+          <footer style={{fontSize: '0.7em', marginBottom: '10px', height: '10vh'}}>@Chris Moffett :)</footer>
+        </Row>
       </Container>
     </div>
   );

@@ -31,6 +31,7 @@ const SimView = (props) => {
     useEffect(() => { 
         if (currNode) {
             setHovered(true);
+            console.log(currNode.name);
         } else {
             setHovered(false);
         }
@@ -61,7 +62,9 @@ const SimView = (props) => {
         let x = Math.round(event.clientX - rect.left)-2;
         let y = Math.round(event.clientY - rect.top)-2;
 
-        setMouseX(x + 50);
+        setMouseX(x);
+        // setMouseY(y - 200); 
+        // setMouseX(x + 50);
         setMouseY(y - 400); //arbitrary, need to adjust
 
         let xOffsetRatio = Constants.CANVAS_WIDTH / canvasOffsetWidth;
@@ -108,12 +111,12 @@ const SimView = (props) => {
             pixels[off + 1] = 255;
             pixels[off + 2] = 255;
             pixels[off + 3] = 255;
-        } else if (isHover && currNode.name == col.name && col.culture.initalRate < 0) {   //decaying
+        } else if (isHover && currNode.political.name == col.political.name && col.culture.initalRate < 0) {   //decaying
             pixels[off]     = 0;
             pixels[off + 1] = 0;
             pixels[off + 2] = 0;
             pixels[off + 3] = 255;
-        } else if (isHover && currNode.name == col.name) {                                 //growing
+        } else if (isHover && currNode.political.name == col.political.name) {                                 //growing
             pixels[off]     = 220;
             pixels[off + 1] = 220;
             pixels[off + 2] = 220;
@@ -127,7 +130,8 @@ const SimView = (props) => {
     }
 
     return (
-        <div style={{marginTop: '20px', display: 'grid', fontSize: 'small', justifyContent: 'center',}}> 
+        <div style={{marginTop: '20px', marginBottom: '30px', 
+                    display: 'grid', fontSize: 'small', justifyContent: 'center',}}> 
             <Overlay target={referenceElement} show={isHover} >
                 {(props) => {
                     if (props.style.transform) {
@@ -136,7 +140,7 @@ const SimView = (props) => {
                         }
                         let adjustedPosStyle = {
                             transform: "translate3d(" + mouseX + "px, " + mouseY + "px, 0)",
-                            padding: '3px',
+                            padding: '5px',
                             border: 'thin',
                             backgroundColor: 'grey'
                         }
@@ -148,7 +152,7 @@ const SimView = (props) => {
                         {...props}>
                             {"Information: "}<br></br>
                             {"Id: " + currNode.id}<br></br>
-                            {"Name: " + currNode.name}<br></br> 
+                            {"Name: " + currNode.political.name}<br></br> 
                             {"Pos: " + currNode.position.x + " " + currNode.position.y}<br></br>
                             {"Culture Color: " + currNode.culture.color.r + " " + currNode.culture.color.g + " " + currNode.culture.color.b + " "}<br></br> 
                             {"Culture Power: " + Math.round(currNode.culture.strength)}<br></br>
@@ -161,6 +165,7 @@ const SimView = (props) => {
             <canvas 
             id='canvas'
             ref={setReferenceElement}
+            style={{border: '5px dashed black'}}
             className={cssStyles.canvas}
             width={Constants.CANVAS_WIDTH}
             height={Constants.CANVAS_HEIGHT}/>
