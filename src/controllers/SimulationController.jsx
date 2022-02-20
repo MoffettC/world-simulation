@@ -1,65 +1,25 @@
 import * as React from 'react';
-import {board, coord, province} from '../models/SimulationModel.jsx';
+import {coord, province} from '../models/SimulationModel.jsx';
+import {generateName} from '../models/NameGenerator';
+import {Constants} from '../utils/Constants.jsx';
+import {MathUtils} from '../utils/MathUtils.jsx';
+import { rgb2lab, lab2rgb, deltaE } from 'rgb-lab';
+import {NodeController} from './NodeController.jsx'
 
+//TODO generate log statements, both to each province and to general logger    
 
-//heavy part, most logic will go here to compute world sim
-
-//map generator func, generates initial state of map
-
-//func that iterates over map and adjusts/adds/subs effects and applies modifiers to each province
-    //sub functions for each effect/modifier
-
-//generate log statements, both to each province and to general logger    
-
-
-const getRandomIntInclusive = (min, max) => {
-    min = Math.ceil(min);
-    max = Math.floor(max);
-    return Math.floor(Math.random() * (max - min + 1) + min); //The maximum is inclusive and the minimum is inclusive
-}
-
-const rgbToHex = (r, g, b) => {
-    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
-}
-
-const hexToRgb = (hex) => {
-    let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result ? {
-      r: parseInt(result[1], 16),
-      g: parseInt(result[2], 16),
-      b: parseInt(result[3], 16)
-    } : null;
-}
-
-const getRandomColor = () => {
-    let letters = '0123456789ABCDEF';
-    let color = '#';
-    for (let i = 0; i < 6; i++) {
-      color += letters[Math.floor(Math.random() * 16)];
-    }
-    return color;
-}
-
-// find Euclidian distance from the pixel color to the specified color 
-const colorDistance = (aRed,aGreen,aBlue,bRed,bGreen,bBlue) => {
-    let diffR,diffG,diffB;
-
-    // distance to color
-    diffR=( aRed - bRed );
-    diffG=( aGreen - bGreen );
-    diffB=( aBlue - bBlue );
-    return(Math.sqrt(diffR*diffR + diffG*diffG + diffB*diffB));
-}
-
-const randomLand = () => {
-        let val = getRandomIntInclusive(1, 99);
-        if (val < 30) {
-            return hexToRgb('#F0FFFF'); //light blue
-        } else {
-            return hexToRgb('3caa13'); //dark green
+const generate1DBoardArr = () => {
+    let board = new Array(Constants.DEFAULT_YNODE_SIZE);
+    let combined1dboard = [];
+    for (let i = 0; i < Constants.DEFAULT_YNODE_SIZE; i++) {
+        board[i] = new Array(Constants.DEFAULT_XNODE_SIZE);
+        for (let j = 0; j < Constants.DEFAULT_XNODE_SIZE; j++) { 
+            board[i][j] = {x: i, y: j};
         }
-        // return hexToRgb(getRandomColor())
-}
+        combined1dboard = [].concat(...board);
+    }
+    return combined1dboard;
+    }
 
 const initializeBoard = (boardToInitialize) => {
     let board = boardToInitialize;
@@ -67,20 +27,34 @@ const initializeBoard = (boardToInitialize) => {
 
     for (let i = 0; i < board.length; i++) { //i = row/y
         for (let j = 0; j < board[i].length; j++) {
-            let x = randomLand();
-            let initialSetup = { //filler info for now
+            // let x = MathUtils.randomLand();
+            let x = MathUtils.getRandomColor();
+
+            let initialSetup = { //filled in later
                 id: ctr++,
-                color: x,
-                name: 'x' + j + 'y' + i,
+                name: generateName(),
                 position: coord(j, i),
                 neighbors: {
                     top: {},
                     bottom: {},
                     left: {},
                     right: {},
-                }, //will go back and fill in after initialization,
-                strength: getRandomIntInclusive(20, 99),
+                }, 
+                culture: {
+                    name: generateName(),
+                    strength: MathUtils.normalDist_bm(Constants.MIN_STRENGTH_SPAWNED, Constants.MAX_STRENGTH_SPAWNED, 0.9),
+                    initalRate: MathUtils.normalDist_bm(1.0001, 50, 1.25),  //1-10
+                    logarithmicBase: MathUtils.normalDist_bm(2.0001, 25, 1.25),// 1 < x < 7
+                    // strength: getRandomIntInclusive(Constants.MIN_STRENGTH_SPAWNED, Constants.MAX_STRENGTH_SPAWNED),
+                    // initalRate: getRandomFloatInclusive(1, 5),  //1-10
+                    // logarithmicBase: getRandomFloatInclusive(2, 5),// 1 < x < 7
+                    color: x,
+                },
+                political: {
+                    name: generateName(),
+                }
             }
+
             board[i][j] = province(initialSetup);
         }
     }
@@ -104,101 +78,78 @@ const initializeBoard = (boardToInitialize) => {
     return board;
 }
 
-const cycleMapXTimes = (times, board, setBoard, setStatus, setboardCycles, boardCycles, setWorking) => {
-    setBoard([...cycleMapOnce(board)]); //immediate
-    setStatus("Processing cycle: " + (1) + " Total Cycles: " + boardCycles);
-    setboardCycles(++boardCycles);
-    setWorking(true);
 
-    for (let i = 1; i < times; i++) {
+const cycleMapXTimes = (times, board, setBoard, setStatus, setboardCycles, boardCycles, setWorking) => {
+    setWorking(true);
+    for (let i = 0; i < times; i++) {
         setTimeout(() => {
             setboardCycles(++boardCycles);
-            setBoard([...cycleMapOnce(board)])
+            setBoard([...cycleMapOnce(board, boardCycles)])
+            setStatus("Total Cycles: " + boardCycles);
             if (i == (times-1)){
-                setStatus("Completed cycle(s): " + (i+1) + " Total Cycles: " + boardCycles);
                 setWorking(false);
-            } else {
-                setStatus("Processing cycle: " + (i+1) + " Total Cycles: " + boardCycles);
             }
-        }, i * 250); //timeout to see progression
+        }, i * Constants.DEFAULT_CYCLE_TIME); //timeout to see progression
     }
 }
 
-let visitedHashMap = {};
-const cycleMapOnce = (board) => {
-    for (let i = 0; i < board.length; i++) { //i = row/y
-        for (let j = 0; j < board[i].length; j++) {
-            let boardSpot = board[i][j];
+//this will cycle through the board once and apply effects/modifiers.....
+const cycleMapOnce = (board, boardCycles) => {
+    let visitedHashMap = {};
+    let combinedShuffledArr = MathUtils.shuffle(generate1DBoardArr());
 
-            if (!visitedHashMap[boardSpot.id]){
-                visitedHashMap[boardSpot.id] = 1;
-                    //this will cycle through the board once and apply effects/modifiers.....
-                for (let neighborPosition in boardSpot.neighbors) {
-                    let neighborSpot = boardSpot.neighbors[neighborPosition];
+    for (let i = 0; i < combinedShuffledArr.length; i++) { //j = col/x
+        let boardSpot = board[combinedShuffledArr[i].x][combinedShuffledArr[i].y];
+        // console.log(shuffleBoard[i][j].x + " " + shuffleBoard[i][j].y)
 
-                    if (neighborSpot.id && neighborSpot.color != boardSpot.color) { //on map neighbors
-                        let roll = getRandomIntInclusive(0, 100);
-                         if (roll <= boardSpot.strength || roll == 100) {
-                            neighborSpot.color = boardSpot.color;
-                            neighborSpot.name = boardSpot.name;
+        if (!visitedHashMap[boardSpot.id]){
+            visitedHashMap[boardSpot.id] = 1;
 
-                            if (neighborSpot.strength - 10 > 30) {
-                                neighborSpot.strength = neighborSpot.strength - 10;
-                            }
-                            // visitedHashMap[neighborSpot.id] = 1;
-                        } else {
+            //randomize neighbors?
+            // let positions = [];
+            // if( Object.keys) {
+            //     positions = Object.keys(boardSpot.neighbors);
+            //     positions = shuffle(positions);
+            // }
+            // for (let direction in positions) {
+            //     let neighborSpot = boardSpot.neighbors[positions[direction]];
 
-                            if (boardSpot.strength + 10 < 99) {
-                                boardSpot.strength = boardSpot.strength + 10;
-                            }
-                            // boardSpot.color = neighborSpot.color
-                            // boardSpot.name = neighborSpot.name
-                        }
+            //config natural growth of node
+            NodeController.computeLocalGrowthDecay(boardSpot);
 
-                    } else if (!neighborSpot.id) {                                  //off map neighbor
-                        let roll = getRandomIntInclusive(0, 81);
-                        let x = randomLand();
-                        if (roll > boardSpot.strength) {
-                            boardSpot.color = x;
-                            boardSpot.strength = roll;
-                        }
+            for (let direction in boardSpot.neighbors) {
+                let neighborSpot = boardSpot.neighbors[direction];
+
+                if (neighborSpot.id) {                                                              //on map neighbor
+                    let roll = MathUtils.getRandomIntInclusive(0, Constants.MAX_STRENGTH_ALLOWED);
+                    if (roll == Constants.DEFINITE_SUCCESS) {
+                        neighborSpot.political.name = boardSpot.political.name;
+                        neighborSpot.culture.color = boardSpot.culture.color;
+                        neighborSpot.culture.strength += boardSpot.culture.strength;
                     }
-                }
 
-            } else {
-                continue;
+                    let colorDiff = MathUtils.findColorDiff(boardSpot.culture.color.r, boardSpot.culture.color.g, boardSpot.culture.color.b, 
+                                neighborSpot.culture.color.r, neighborSpot.culture.color.g, neighborSpot.culture.color.b)
+                                                                                                    //on map friendly neighbor
+                    if (colorDiff < Constants.COLOR_DIFF 
+                        || boardSpot.political.name == neighborSpot.political.name
+                        || boardSpot.culture.color == neighborSpot.culture.color) {                                 //same team neighbor              
+                        NodeController.computeFriendlyNeighborInteraction(boardSpot, neighborSpot);
+
+                    } else {
+                        NodeController.computeEnemyNeighborInteraction(boardSpot, neighborSpot);
+                    }
+
+                } else if (!neighborSpot.id && (boardCycles % 25) == 1) {                           //off map neighbor
+                    NodeController.computeOffMapNeighborInteraction(boardSpot, neighborSpot);
+                }
             }
-        }
+        } 
     }
-    visitedHashMap = {};
     return board;
 }
 
-const searchBoard = (boardStartSpot, board) => { //BFS for different colors
-    let queueNeighbors = [];
-    queueNeighbors.push(boardStartSpot);
-
-    while (queueNeighbors.length != 0) {
-        let currSpot = queueNeighbors.shift();
-
-        for (let neighborPosition in currSpot.neighbors) {
-            let neighborSpot = currSpot.neighbors[neighborPosition];
-            if (neighborSpot.id && neighborSpot.color != currSpot.color) {
-                queueNeighbors.push(neighborSpot);
-            }
-        }
-
-    }
-
-    return board
-}
-
-
 export {
-    getRandomIntInclusive,
-    rgbToHex,
-    hexToRgb,
-    getRandomColor,
     cycleMapOnce,
     cycleMapXTimes,
     initializeBoard,

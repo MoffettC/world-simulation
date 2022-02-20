@@ -60,8 +60,8 @@ the new nodes strength is weakened. when a node is unsuccessful
 against a diff node, it takes dmg in str
 from the other node
 */
-const MIN_STRENGTH_WEAKENED = 5;
-const MIN_STRENGTH_GAINED = 5;
+const MIN_STRENGTH_WEAKENED = 500;
+const MIN_STRENGTH_GAINED = 500;
 
 /*
 max/min chance for offmap nodes to interact with border nodes
